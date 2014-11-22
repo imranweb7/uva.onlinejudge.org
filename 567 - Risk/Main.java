@@ -10,35 +10,77 @@ import java.io.*;
 import java.util.*;
 
 class Graph{
-    private Map<Integer, List<Integer>> Adjacency_List;
+    private Map<Integer, List<Integer>> graph;
     
     public Graph(){
-        Adjacency_List = new HashMap<>();
+        graph = new HashMap<>();
     }
     
     void setEdge(int source, int destination){
-        if(!Adjacency_List.containsKey(source)){
-            Adjacency_List.put(new Integer(source), new LinkedList<Integer>());
+        if(!graph.containsKey(source)){
+            graph.put(new Integer(source), new LinkedList<Integer>());
         }
         
-        if(!Adjacency_List.containsKey(destination)){
-            Adjacency_List.put(new Integer(destination), new LinkedList<Integer>());
+        if(!graph.containsKey(destination)){
+            graph.put(new Integer(destination), new LinkedList<Integer>());
         }
         
-        List<Integer> head = Adjacency_List.get(source);
+        List<Integer> head = graph.get(source);
         head.add(destination);
         
-        List<Integer> tail = Adjacency_List.get(destination);
+        List<Integer> tail = graph.get(destination);
         tail.add(source);        
     }
     
     List<Integer> getEdges(int source){
-        return Adjacency_List.get(source);
+        return graph.get(source);
+    }
+    
+    boolean isNodeExist(int node){
+        return graph.containsKey(node);
+    }
+    
+    int calculateShortestPath(int source, int destination){
+        if(source == destination || !isNodeExist(source) || !isNodeExist(destination)){
+            return 0;
+        }
+        
+        Map<Integer, Integer> visited = new HashMap<>();
+        //set source node visited
+        visited.put(new Integer(source), new Integer(1));
+        
+        Map<Integer, Integer> level = new HashMap<>();
+        //set source node level 0
+        level.put(new Integer(source), new Integer(0));
+        
+        Queue<Integer> queue = new LinkedList<Integer>();
+        //push source node to queue
+        queue.add(source);
+        
+        while(!queue.isEmpty()){
+            int top = queue.poll();
+            int size = getEdges(top).size();
+            
+            for(int i=0; i<size; i++){
+                if(!visited.containsKey(getEdges(top).get(i))){
+                    visited.put(new Integer(getEdges(top).get(i)), new Integer(1));
+                    level.put(new Integer(getEdges(top).get(i)), new Integer(level.get(top) + 1));
+                    queue.add(getEdges(top).get(i));
+                }
+            }            
+        }
+        
+        if(level.containsKey(destination)){
+            return level.get(destination);
+        }
+        
+        return 0;
     }
 }
 
 class Main{
-    private final int MAX_NODE = 20;    
+    private final int MAX_NODE = 20; 
+    private final int MAX_LINE = 19; 
     BufferedReader reader;
     Graph graph;
     
@@ -46,6 +88,41 @@ class Main{
         Main obj = new Main();
         obj.beginProcess();
     }
+    
+    void beginProcess(){
+        try {
+            reader = new BufferedReader(new InputStreamReader(System.in));
+            
+            int test_case = 1;
+            
+            while(true){
+                    graph = new Graph();
+                    
+                    String line = reader.readLine();                    
+                    if(line.isEmpty() || line == null){
+                        break;
+                    }
+                    
+                     parseLineIntoEdge(1, line);
+
+                    //the Ith line, where I is less than 20
+                    for(int i=2; i<=MAX_LINE; i++){
+                        line = reader.readLine();
+                        parseLineIntoEdge(i, line);
+                    }// end lines
+                    
+                    processShortestPathResult(test_case);
+
+                    System.out.print("\n");
+                    
+                    test_case++;
+            }
+        
+        } catch (NumberFormatException | IOException ex) {
+            
+        }
+    }
+    
     
     void parseLineIntoEdge(int line_no, String line){
         String[] token = line.split("\\s");  
@@ -60,7 +137,7 @@ class Main{
                     int country = Integer.parseInt(token[i]);
                     
                     if(country > line_no && country <= MAX_NODE){
-                        graph.setEdge(i, country);
+                        graph.setEdge(line_no, country);
                     }
                 }
             }
@@ -87,8 +164,7 @@ class Main{
                             int B = Integer.parseInt(line_token[1]);
                             
                             if(A >= 1 && B <= 20 && A != B){
-                                int shortest_path_count = calculateShortestPath(graph, A, B);
-                                System.out.printf("%2d to %2d: %d%n", A, B, shortest_path_count);
+                                System.out.printf("%2d to %2d: %d%n", A, B, graph.calculateShortestPath(A, B));
                             }
                         }
                         
@@ -103,70 +179,4 @@ class Main{
         }
     }
     
-    void beginProcess(){
-        try {
-            reader = new BufferedReader(new InputStreamReader(System.in));
-            
-            int test_case = 1;
-            
-            while(true){
-                    graph = new Graph();
-                    
-                    String line = reader.readLine();                    
-                    if(line.isEmpty() || line == null){
-                        break;
-                    }
-                    
-                     parseLineIntoEdge(1, line);
-
-                    //the Ith line, where I is less than 20
-                    for(int i=2; i<=19; i++){
-                        line = reader.readLine();
-                        parseLineIntoEdge(i, line);
-                    }// end lines
-                    
-                    processShortestPathResult(test_case);
-
-                    System.out.print("\n");
-                    
-                    test_case++;
-            }
-        
-        } catch (NumberFormatException | IOException ex) {
-            
-        }
-    }
-    
-    int calculateShortestPath(Graph g, int source, int destination){
-        Map<Integer, Integer> visited = new HashMap<>();
-        //set source node visited
-        visited.put(new Integer(source), new Integer(1));
-        
-        Map<Integer, Integer> level = new HashMap<>();
-        //set source node level 0
-        level.put(new Integer(source), new Integer(0));
-        
-        Queue<Integer> queue = new LinkedList<Integer>();
-        //push source node to queue
-        queue.add(source);
-        
-        while(!queue.isEmpty()){
-            int top = queue.poll();
-            int size = g.getEdges(top).size();
-            
-            for(int i=0; i<size; i++){
-                if(!visited.containsKey(g.getEdges(top).get(i))){
-                    visited.put(new Integer(g.getEdges(top).get(i)), new Integer(1));
-                    level.put(new Integer(g.getEdges(top).get(i)), new Integer(level.get(top) + 1));
-                    queue.add(g.getEdges(top).get(i));
-                }
-            }            
-        }
-        
-        if(level.containsKey(destination)){
-            return level.get(destination);
-        }
-        
-        return 0;
-    }
 }
